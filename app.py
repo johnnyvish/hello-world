@@ -2,6 +2,8 @@ from potassium import Potassium, Request, Response
 from audiocraft.models import AudioGen
 from audiocraft.data.audio import audio_write
 import torchaudio
+import io
+import base64
 
 app = Potassium("my_app")
 
@@ -12,8 +14,7 @@ def init():
     audio_model.set_generation_params(duration=5)  # generate 5 seconds of audio.
 
     context = {
-        "audio_model": audio_model,
-        "hello": "world"
+        "audio_model": audio_model
     }
 
     return context
@@ -23,22 +24,27 @@ def handler(context: dict, request: Request) -> Response:
     # Retrieve the audio model from the app context
     audio_model = context.get("audio_model")
 
-    # Obtain descriptions from the request (ensure your client sends descriptions as a list)
+    # Obtain descriptions from the request
     descriptions = request.json.get("descriptions", [])
 
     # Generate audio based on descriptions
     wav = audio_model.generate(descriptions)
 
-    # Save generated audio files and collect filenames
-    filenames = []
-    for idx, one_wav in enumerate(wav):
-        filename = f'{idx}.wav'
-        audio_write(filename, one_wav.cpu(), audio_model.sample_rate, strategy="loudness", loudness_compressor=True)
-        filenames.append(filename)
-    
-    # Return the filenames in the response (modify as per your requirements)
+    # Convert audio tensors to base64 encoded WAV data and associate with descriptions
+    audio_data = []
+    for desc, one_wav in zip(descriptions, wav):
+        buffer = io.BytesIO()
+        torchaudio.save(buffer, one_wav.cpu(), sample_rate=audio_model.sample_rate, format="wav")
+        base64_audio = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        
+        audio_data.append({
+            "description": desc,
+            "audio": base64_audio
+        })
+
+    # Return the combined data in the response
     return Response(
-        json = {"audio_files": filenames}, 
+        json = {"audio_data": audio_data}, 
         status=200
     )
 

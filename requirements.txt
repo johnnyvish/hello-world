@@ -3,3 +3,11 @@ torch
 transformers
 torchaudio
 git+https://github.com/facebookresearch/audiocraft.git
+
+
+curl -X POST \
+    -H 'Content-Type: application/json' \
+    -H 'X-Banana-API-Key: 0098b2f4-d040-4249-954d-a692f93d3d25' \
+    -H 'X-Banana-Model-Key: 93f82374-5f0b-418b-a715-d5ce00f3387b' \
+    -d '{"descriptions": ["dog barking", "sirenes of an emergency vehicule", "footsteps in a corridor"]}'  \
+    https://hello-world-ll8wrf9l00.run.banana.dev
