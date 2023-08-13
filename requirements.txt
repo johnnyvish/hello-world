@@ -1,3 +1,5 @@
 potassium
 torch
 transformers
+torchaudio
+git+https://github.com/facebookresearch/audiocraft.git
